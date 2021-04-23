@@ -42,7 +42,7 @@
 <script defer type="text/javascript">
     let sourceImage, targetRoot, markerArea, currentState;
 
-    let username = "John";
+    let username = (new URLSearchParams(location.search)).get('username') || " ANONYMOUS";
     // let defaultState = {
     //   width: 600,
     //   height: 583,
