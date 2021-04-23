@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Static Template</title>
+    <style>
+        html,
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #app {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 50px;
+        }
+
+        #sampleImage {
+            max-width: 600px;
+            max-height: 100%;
+            position: absolute;
+        }
+
+        #sourceImage {
+            max-width: 600px;
+            max-height: 80%;
+        }
+    </style>
+    <script src="https://unpkg.com/markerjs2/markerjs2.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- we are putting a copy of the original image under the result image so it's always annotation-free -->
+    <img id="sourceImage" src="sample.jpg" crossorigin="anonymous"/>
+    <img id="sampleImage" src="sample.jpg" crossorigin="anonymous"/>
+</div>
+</body>
+<script defer type="text/javascript">
+    let sourceImage, targetRoot, markerArea, currentState;
+
+    let username = "John";
+    // let defaultState = {
+    //   width: 600,
+    //   height: 583,
+    //   markers: [
+    //     {
+    //       color: "#ff0000",
+    //       fontFamily: "Helvetica, Arial, sans-serif",
+    //       padding: 5,
+    //       text: "John: {message}",
+    //       left: 111,
+    //       top: 123,
+    //       width: 405,
+    //       height: 223,
+    //       rotationAngle: 0,
+    //       visualTransformMatrix: { a: 1, b: 0, c: 0, d: 1, e: 111, f: 123 },
+    //       containerTransformMatrix: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+    //       typeName: "TextMarker",
+    //       state: "select"
+    //     }
+    //   ]
+    // };
+
+    // save references to the original image and its parent div (positioning root)
+    function setSourceImage(source) {
+        sourceImage = source;
+        targetRoot = source.parentElement;
+    }
+
+    function addUsernameForTextMarkers(state) {
+        for (let i = 0; i < state.markers.length; i++) {
+            if (state.markers[i].typeName === "TextMarker") {
+                // check need add username
+                if (!state.markers[i].text.startsWith(`${username}:`)) {
+                    state.markers[i].text = `${username}:${state.markers[i].text}`;
+                }
+            }
+        }
+    }
+
+    function removeUsernameForTextMarkers(state) {
+        for (let i = 0; i < state.markers.length; i++) {
+            if (state.markers[i].typeName === "TextMarker") {
+                // check need remove username
+                if (!!state.markers[i].text.startsWith(`${username}:`)) {
+                    state.markers[i].text = state.markers[i].text.replace(`${username}:`, '');
+                }
+            }
+        }
+    }
+
+    function createTaskUpdateTarget(target) {
+        setTimeout(async () => {
+            markerArea.show()
+            addUsernameForTextMarkers(currentState)
+            await markerArea.restoreState(currentState)
+            let data = await markerArea.render()
+            console.log(typeof data)
+            target.src = data
+            await markerArea.close();
+        }, 50)
+    }
+
+    function createMarkerArea(target) {
+        markerArea = new markerjs2.MarkerArea(sourceImage);
+        markerArea.targetRoot = targetRoot;
+        // save current state
+        markerArea.addRenderEventListener(async (imgURL, state) => {
+            // save the state of MarkerArea
+            currentState = state
+            createTaskUpdateTarget(target)
+        });
+
+        // if default state
+        // if (defaultState) {
+        //   markerArea.show();
+        //   markerArea.restoreState(defaultState);
+        //   markerArea.startRenderAndClose();
+        // }
+    }
+
+    function showMarkerArea() {
+        markerArea.show();
+        // if previous state is present - restore it
+        if (currentState) {
+            removeUsernameForTextMarkers(currentState)
+            markerArea.restoreState(currentState);
+        }
+    }
+
+    setSourceImage(document.getElementById("sourceImage"));
+
+    const sampleImage = document.getElementById("sampleImage");
+
+    // Show by click
+    sampleImage.addEventListener("click", () => {
+        showMarkerArea();
+    });
+    setTimeout(() => {
+        createMarkerArea(sampleImage);
+    }, 100);
+</script>
+</html>
