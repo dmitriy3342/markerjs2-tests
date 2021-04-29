@@ -98,9 +98,7 @@
             markerArea.show()
             addUsernameForTextMarkers(currentState)
             await markerArea.restoreState(currentState)
-            let data = await markerArea.render()
-            console.log(typeof data)
-            target.src = data
+            target.src = await markerArea.render()
             await markerArea.close();
         }, 50)
     }
